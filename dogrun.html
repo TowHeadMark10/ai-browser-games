@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dog Runner</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0d1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+  }
+  canvas {
+    display: block;
+    border: 2px solid #00ff88;
+    image-rendering: pixelated;
+  }
+  #subtitle {
+    color: #4a4a6a;
+    font-size: 9px;
+    margin-top: 8px;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+<canvas id="c" width="800" height="300"></canvas>
+<div id="subtitle">ARROW KEYS / SPACE TO PLAY</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+const W = canvas.width;
+const H = canvas.height;
+const GROUND_Y = H - 60;
+const GRAVITY = 0.6;
+const JUMP_VEL = -13;
+
+// ---- Palette ----
+const COL = {
+  sky1: '#1a1a2e', sky2: '#16213e',
+  ground: '#4a4a6a', groundLine: '#5a5a8a',
+  dog: '#222222', dogDark: '#111111', dogLight: '#444444', dogNose: '#000000',
+  hudGreen: '#00ff88',
+  cloud: '#2a2a4e',
+  bed: '#6a4a8a', bedDark: '#4a2a6a',
+  ball: '#e05050', ballShine: '#f08080',
+  bone: '#d4c4a0', boneDark: '#a49470',
+  bear: '#f0f0f0', bearDark: '#c8c8c8', bearAccent: '#e8a0a0',
+};
+
+// ---- State ----
+let state, dog, obstacles, clouds, groundDeco, particles, levelFlash;
+
+let maxScore = parseInt(localStorage.getItem('dogrun_max') || '0');
+
+function initGame() {
+  state = { phase: 'idle', score: 0, level: 1, speed: 4, frame: 0, nextLevel: 200 };
+  dog = {
+    x: 120, y: GROUND_Y, vy: 0,
+    w: 48, h: 40,
+    state: 'run', // run | jump | duck
+    animFrame: 0, animTimer: 0,
+    isOnGround: true,
+    ducking: false,
+  };
+  obstacles = [];
+  clouds = [
+    { x: 200, y: 40, w: 80, h: 24 },
+    { x: 500, y: 25, w: 60, h: 18 },
+    { x: 700, y: 55, w: 100, h: 28 },
+  ];
+  groundDeco = [];
+  for (let i = 0; i < 20; i++) groundDeco.push({ x: i * 50, type: Math.floor(Math.random() * 3) });
+  particles = [];
+  levelFlash = null;
+  obstacleTimer = 0;
+  obstacleGap = 90;
+}
+
+let keys = {};
+let obstacleTimer = 0;
+let obstacleGap = 90;
+
+document.addEventListener('keydown', e => {
+  if (['ArrowUp','ArrowDown','Space','Enter'].includes(e.code)) e.preventDefault();
+  keys[e.code] = true;
+
+  if (state.phase === 'idle' && (e.code === 'Space' || e.code === 'ArrowUp')) {
+    state.phase = 'running';
+    doJump();
+  }
+  if (state.phase === 'dead' && (e.code === 'Space' || e.code === 'Enter')) {
+    initGame();
+    state.phase = 'running';
+  }
+  if (state.phase === 'running') {
+    if ((e.code === 'Space' || e.code === 'ArrowUp') && dog.isOnGround && !dog.ducking) {
+      doJump();
+    }
+  }
+});
+document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+function doJump() {
+  dog.vy = JUMP_VEL;
+  dog.isOnGround = false;
+  dog.state = 'jump';
+  spawnParticles(dog.x + dog.w / 2, GROUND_Y + dog.h, '#4a4a6a', 6);
+}
+
+// ---- Obstacle types ----
+const OBSTACLE_TYPES = [
+  { name: 'bed',  w: 70, h: 22, avoidBy: 'duck',  color: COL.bed,  dark: COL.bedDark },
+  { name: 'ball', w: 28, h: 28, avoidBy: 'jump',  color: COL.ball, dark: COL.ballShine, circle: true },
+  { name: 'bone', w: 36, h: 22, avoidBy: 'jump',  color: COL.bone, dark: COL.boneDark },
+  { name: 'bear', w: 34, h: 52, avoidBy: 'jump',  color: COL.bear, dark: COL.bearDark },
+];
+
+function spawnObstacle() {
+  const type = OBSTACLE_TYPES[Math.floor(Math.random() * OBSTACLE_TYPES.length)];
+  obstacles.push({
+    ...type,
+    x: W + 20,
+    y: GROUND_Y + dog.h - type.h,
+  });
+}
+
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 4,
+      vy: -Math.random() * 3 - 1,
+      life: 1, color,
+    });
+  }
+}
+
+// ---- Draw helpers ----
+function px(color) { ctx.fillStyle = color; }
+
+function drawRect(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.round(x), Math.round(y), w, h);
+}
+
+// ---- Draw Dog ----
+function drawDog(x, y, dogState, animF, ducking) {
+  const baseX = Math.round(x);
+  const baseY = Math.round(y);
+  const s = 1; // scale
+
+  if (ducking) {
+    // Ducked body - squashed
+    drawRect(baseX + 6,  baseY + 14, 36, 14, COL.dog);       // body low
+    drawRect(baseX + 30, baseY + 10, 16, 14, COL.dog);       // head
+    drawRect(baseX + 44, baseY + 12,  8,  6, COL.dog);       // snout
+    drawRect(baseX + 46, baseY + 14,  4,  3, COL.dogNose);   // nose
+    drawRect(baseX + 32, baseY +  8,  8,  8, COL.dog);       // ear
+    drawRect(baseX + 30, baseY +  6,  6,  8, COL.dogDark);   // ear dark
+    // legs (two pairs visible, low)
+    drawRect(baseX + 10, baseY + 24,  8,  6, COL.dogDark);
+    drawRect(baseX + 22, baseY + 24,  8,  6, COL.dogDark);
+    // tail
+    drawRect(baseX,      baseY + 16,  8,  6, COL.dog);
+    drawRect(baseX - 4,  baseY + 12,  6,  6, COL.dog);
+    // eye
+    drawRect(baseX + 40, baseY + 12,  3,  3, COL.dogNose);
+    return;
+  }
+
+  // Body
+  drawRect(baseX + 8,  baseY + 10, 32, 22, COL.dog);
+  // Belly
+  drawRect(baseX + 10, baseY + 18, 20, 12, COL.dogLight);
+  // Head
+  drawRect(baseX + 28, baseY,     20, 20, COL.dog);
+  // Snout
+  drawRect(baseX + 42, baseY + 8,  8,  8, COL.dog);
+  drawRect(baseX + 42, baseY + 8,  6,  4, COL.dogLight);
+  // Nose
+  drawRect(baseX + 48, baseY + 8,  4,  3, COL.dogNose);
+  // Eye
+  drawRect(baseX + 38, baseY + 4,  4,  4, COL.dogNose);
+  drawRect(baseX + 39, baseY + 5,  2,  2, '#ffffff');
+  // Ear
+  drawRect(baseX + 28, baseY - 8, 10, 14, COL.dogDark);
+  drawRect(baseX + 30, baseY - 6,  6, 10, COL.dog);
+  // Tail
+  drawRect(baseX,      baseY + 6,  10,  6, COL.dog);
+  drawRect(baseX - 6,  baseY,       8,  8, COL.dog);
+
+  // Legs - animated
+  if (dogState === 'jump') {
+    // Legs tucked
+    drawRect(baseX + 10, baseY + 28, 8, 10, COL.dogDark);
+    drawRect(baseX + 22, baseY + 28, 8, 10, COL.dogDark);
+    drawRect(baseX + 10, baseY + 36, 8,  4, COL.dog);
+    drawRect(baseX + 22, baseY + 36, 8,  4, COL.dog);
+  } else {
+    // Running legs
+    const legPhase = animF % 2;
+    if (legPhase === 0) {
+      drawRect(baseX + 10, baseY + 28, 8, 12, COL.dogDark);
+      drawRect(baseX + 24, baseY + 26, 8, 14, COL.dogDark);
+      drawRect(baseX + 10, baseY + 38, 10,  4, COL.dog);
+      drawRect(baseX + 24, baseY + 36, 10,  4, COL.dog);
+    } else {
+      drawRect(baseX + 10, baseY + 26, 8, 14, COL.dogDark);
+      drawRect(baseX + 24, baseY + 28, 8, 12, COL.dogDark);
+      drawRect(baseX + 10, baseY + 36, 10,  4, COL.dog);
+      drawRect(baseX + 24, baseY + 38, 10,  4, COL.dog);
+    }
+  }
+}
+
+// ---- Draw Obstacle ----
+function drawObstacle(obs) {
+  const x = Math.round(obs.x), y = Math.round(obs.y);
+  if (obs.name === 'ball') {
+    // Draw circle using squares (pixel art)
+    ctx.fillStyle = obs.color;
+    ctx.beginPath();
+    ctx.arc(x + obs.w / 2, y + obs.h / 2, obs.w / 2, 0, Math.PI * 2);
+    ctx.fill();
+    drawRect(x + 4, y + 4, 8, 8, obs.dark); // shine
+    drawRect(x + 6, y + 6, 4, 4, '#ffffff');
+  } else if (obs.name === 'bed') {
+    // Dog bed: wide low cushion
+    drawRect(x,     y + 6,  obs.w,     obs.h - 6, obs.color);
+    drawRect(x + 2, y,       obs.w - 4, 8,          obs.dark); // pillow/rim
+    // Stripes
+    for (let i = 0; i < 3; i++) {
+      drawRect(x + 8 + i * 18, y + 8, 4, obs.h - 10, obs.dark);
+    }
+  } else if (obs.name === 'bone') {
+    const cx = x + obs.w / 2, cy = y + obs.h / 2;
+    // Shaft
+    drawRect(x + 8, y + 6, obs.w - 16, obs.h - 12, obs.color);
+    // End knobs
+    drawRect(x,      y,      10, 10, obs.color);
+    drawRect(x,      y + obs.h - 10, 10, 10, obs.color);
+    drawRect(x + obs.w - 10, y, 10, 10, obs.color);
+    drawRect(x + obs.w - 10, y + obs.h - 10, 10, 10, obs.color);
+    // Outline detail
+    drawRect(x + 2,  y + 2,  6, 6, obs.dark);
+  } else if (obs.name === 'bear') {
+    // Teddy bear pixel art (white/light grey)
+    const bx = x, by = y;
+    // Ears (two round bumps on top)
+    drawRect(bx + 2,  by,      10, 10, COL.bear);
+    drawRect(bx + 22, by,      10, 10, COL.bear);
+    drawRect(bx + 4,  by + 2,   6,  6, COL.bearDark);
+    drawRect(bx + 24, by + 2,   6,  6, COL.bearDark);
+    // Head
+    drawRect(bx + 4,  by + 8,  26, 22, COL.bear);
+    // Face muzzle
+    drawRect(bx + 8,  by + 20, 18, 10, COL.bearDark);
+    // Eyes
+    drawRect(bx + 9,  by + 14,  5,  5, '#222222');
+    drawRect(bx + 20, by + 14,  5,  5, '#222222');
+    drawRect(bx + 10, by + 15,  2,  2, '#ffffff');
+    drawRect(bx + 21, by + 15,  2,  2, '#ffffff');
+    // Nose
+    drawRect(bx + 14, by + 22,  6,  4, '#333333');
+    // Body
+    drawRect(bx + 2,  by + 28, 30, 22, COL.bear);
+    // Belly patch
+    drawRect(bx + 7,  by + 30, 20, 16, COL.bearDark);
+    // Arms
+    drawRect(bx,      by + 28,  6, 16, COL.bear);
+    drawRect(bx + 28, by + 28,  6, 16, COL.bear);
+    // Legs
+    drawRect(bx + 4,  by + 46, 10, 6,  COL.bear);
+    drawRect(bx + 20, by + 46, 10, 6,  COL.bear);
+  }
+}
+
+// ---- Draw Ground ----
+let groundOffset = 0;
+function drawGround(spd) {
+  groundOffset = (groundOffset + spd) % 50;
+  // Ground fill
+  drawRect(0, GROUND_Y + 40, W, 60, COL.ground);
+  // Ground top line
+  drawRect(0, GROUND_Y + 38, W, 4, COL.groundLine);
+  // Scrolling hash marks
+  ctx.fillStyle = '#3a3a5a';
+  for (let i = -50; i < W + 50; i += 50) {
+    const gx = i - groundOffset;
+    ctx.fillRect(Math.round(gx), GROUND_Y + 40, 2, 10);
+    ctx.fillRect(Math.round(gx + 25), GROUND_Y + 46, 2, 6);
+  }
+}
+
+// ---- Draw Clouds ----
+function drawClouds(spd) {
+  clouds.forEach(c => {
+    c.x -= spd * 0.2;
+    if (c.x + c.w < 0) c.x = W + Math.random() * 200;
+    ctx.fillStyle = COL.cloud;
+    // Pixel cloud shape
+    drawRect(c.x + c.w * 0.2, c.y,          c.w * 0.6, c.h,       COL.cloud);
+    drawRect(c.x,              c.y + c.h*0.3, c.w,       c.h * 0.7, COL.cloud);
+    drawRect(c.x + c.w * 0.1, c.y - c.h*0.2, c.w * 0.4, c.h * 0.6, COL.cloud);
+  });
+}
+
+// ---- Draw Background ----
+function drawBackground() {
+  // Sky gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, GROUND_Y + 38);
+  grad.addColorStop(0, COL.sky1);
+  grad.addColorStop(1, COL.sky2);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, GROUND_Y + 38);
+}
+
+// ---- HUD ----
+function drawHUD() {
+  ctx.fillStyle = COL.hudGreen;
+  ctx.font = '12px "Press Start 2P", monospace';
+  const scoreStr = String(Math.floor(state.score)).padStart(6, '0');
+  const maxStr = String(maxScore).padStart(6, '0');
+  ctx.fillText(`SCORE: ${scoreStr}`, 20, 30);
+  ctx.fillStyle = '#ffcc00';
+  ctx.fillText(`BEST: ${maxStr}`, W / 2 - 90, 30);
+  ctx.fillStyle = COL.hudGreen;
+  ctx.fillText(`LEVEL: ${state.level}`, W - 160, 30);
+}
+
+// ---- Collision ----
+function getDogBox() {
+  const margin = 4;
+  if (dog.ducking) {
+    return {
+      x: dog.x + 6 + margin,
+      y: dog.y + 14 + margin,
+      w: dog.w - margin * 2 - 6,
+      h: 14 - margin,
+    };
+  }
+  return {
+    x: dog.x + 8 + margin,
+    y: dog.y + margin,
+    w: dog.w - margin * 2,
+    h: dog.h - margin,
+  };
+}
+
+function getObsBox(obs) {
+  const margin = 4;
+  return {
+    x: obs.x + margin,
+    y: obs.y + margin,
+    w: obs.w - margin * 2,
+    h: obs.h - margin * 2,
+  };
+}
+
+function aabb(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x &&
+         a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+// ---- Particles ----
+function updateParticles() {
+  particles = particles.filter(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= 0.04;
+    return p.life > 0;
+  });
+}
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.globalAlpha = p.life;
+    drawRect(p.x, p.y, 4, 4, p.color);
+  });
+  ctx.globalAlpha = 1;
+}
+
+// ---- Screens ----
+function drawIdleScreen() {
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = COL.hudGreen;
+  ctx.font = '22px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('DOG RUNNER', W / 2, H / 2 - 30);
+  ctx.font = '10px "Press Start 2P", monospace';
+  ctx.fillStyle = '#aaaacc';
+  ctx.fillText('PRESS SPACE OR UP TO START', W / 2, H / 2 + 10);
+  ctx.fillText('UP/SPACE = JUMP   DOWN = DUCK', W / 2, H / 2 + 35);
+  ctx.textAlign = 'left';
+}
+
+function drawDeadScreen() {
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#ff4466';
+  ctx.font = '20px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('GAME OVER', W / 2, H / 2 - 30);
+  ctx.fillStyle = COL.hudGreen;
+  ctx.font = '11px "Press Start 2P", monospace';
+  ctx.fillText(`SCORE: ${String(Math.floor(state.score)).padStart(6, '0')}`, W / 2, H / 2 + 4);
+  ctx.fillStyle = '#aaaacc';
+  ctx.font = '9px "Press Start 2P", monospace';
+  ctx.fillText('PRESS SPACE OR ENTER TO RETRY', W / 2, H / 2 + 34);
+  ctx.textAlign = 'left';
+}
+
+function drawLevelFlash() {
+  if (!levelFlash) return;
+  levelFlash.timer--;
+  if (levelFlash.timer <= 0) { levelFlash = null; return; }
+  const alpha = Math.min(1, levelFlash.timer / 20);
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = COL.hudGreen;
+  ctx.font = '18px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`LEVEL ${levelFlash.level}!`, W / 2, H / 2);
+  ctx.textAlign = 'left';
+  ctx.globalAlpha = 1;
+}
+
+// ---- Update ----
+function update() {
+  if (state.phase !== 'running') return;
+
+  state.frame++;
+  state.score += 0.1 * state.level;
+
+  // Level up
+  if (state.score >= state.nextLevel) {
+    state.level = Math.min(state.level + 1, 10);
+    state.speed = 4 + (state.level - 1) * 1.2;
+    state.nextLevel += 200 * state.level;
+    levelFlash = { level: state.level, timer: 80 };
+  }
+
+  // Duck
+  dog.ducking = !!(keys['ArrowDown']);
+  if (dog.ducking && dog.isOnGround) {
+    dog.state = 'duck';
+    dog.h = 28;
+  } else if (dog.isOnGround) {
+    dog.h = 40;
+    dog.state = 'run';
+  }
+
+  // Physics
+  if (!dog.isOnGround) {
+    dog.vy += GRAVITY;
+    dog.y += dog.vy;
+    if (dog.y >= GROUND_Y) {
+      dog.y = GROUND_Y;
+      dog.vy = 0;
+      dog.isOnGround = true;
+      dog.state = dog.ducking ? 'duck' : 'run';
+      spawnParticles(dog.x + dog.w / 2, GROUND_Y + dog.h, '#4a4a6a', 4);
+    }
+    dog.state = 'jump';
+  }
+
+  // Anim
+  dog.animTimer++;
+  if (dog.animTimer >= 8) { dog.animTimer = 0; dog.animFrame++; }
+
+  // Obstacles
+  obstacleTimer++;
+  if (obstacleTimer >= obstacleGap) {
+    obstacleTimer = 0;
+    obstacleGap = Math.max(40, 90 - state.level * 5) + Math.floor(Math.random() * 40);
+    spawnObstacle();
+  }
+
+  obstacles.forEach(o => { o.x -= state.speed; });
+  obstacles = obstacles.filter(o => o.x + o.w > -10);
+
+  // Collision
+  const db = getDogBox();
+  for (const obs of obstacles) {
+    if (aabb(db, getObsBox(obs))) {
+      state.phase = 'dead';
+      if (Math.floor(state.score) > maxScore) {
+        maxScore = Math.floor(state.score);
+        localStorage.setItem('dogrun_max', maxScore);
+      }
+      spawnParticles(dog.x + dog.w / 2, dog.y + dog.h / 2, '#ff4466', 20);
+      break;
+    }
+  }
+
+  updateParticles();
+}
+
+// ---- Render ----
+function render() {
+  drawBackground();
+  drawClouds(state.phase === 'running' ? state.speed : 2);
+  drawGround(state.phase === 'running' ? state.speed : 2);
+
+  // Draw dog (always show in idle too)
+  const dogAnimF = state.phase === 'running' ? dog.animFrame : Math.floor(Date.now() / 200);
+  const dogDucking = state.phase === 'running' ? dog.ducking : false;
+  const dogState = state.phase === 'dead' ? 'jump' : dog.state;
+  drawDog(dog.x, dog.y, dogState, dogAnimF, dogDucking);
+
+  obstacles.forEach(drawObstacle);
+  drawParticles();
+  drawHUD();
+  drawLevelFlash();
+
+  if (state.phase === 'idle') drawIdleScreen();
+  if (state.phase === 'dead') drawDeadScreen();
+}
+
+// ---- Loop ----
+function loop() {
+  update();
+  render();
+  requestAnimationFrame(loop);
+}
+
+initGame();
+loop();
+</script>
+</body>
+</html>
