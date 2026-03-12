@@ -8,7 +8,7 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #0d0d1a;
+    background: #87ceeb;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -18,11 +18,11 @@
   }
   canvas {
     display: block;
-    border: 2px solid #00ff88;
+    border: 2px solid #228822;
     image-rendering: pixelated;
   }
   #subtitle {
-    color: #4a4a6a;
+    color: #336633;
     font-size: 9px;
     margin-top: 8px;
     letter-spacing: 1px;
@@ -44,11 +44,11 @@ const JUMP_VEL = -13;
 
 // ---- Palette ----
 const COL = {
-  sky1: '#1a1a2e', sky2: '#16213e',
-  ground: '#4a4a6a', groundLine: '#5a5a8a',
+  sky1: '#87ceeb', sky2: '#b0e0ff',
+  ground: '#5a9a2a', groundLine: '#4a8a1a',
   dog: '#222222', dogDark: '#111111', dogLight: '#444444', dogNose: '#000000',
-  hudGreen: '#00ff88',
-  cloud: '#2a2a4e',
+  hudGreen: '#006600',
+  cloud: '#ffffff',
   bed: '#6a4a8a', bedDark: '#4a2a6a',
   ball: '#e05050', ballShine: '#f08080',
   bone: '#d4c4a0', boneDark: '#a49470',
@@ -112,7 +112,7 @@ function doJump() {
   dog.vy = JUMP_VEL;
   dog.isOnGround = false;
   dog.state = 'jump';
-  spawnParticles(dog.x + dog.w / 2, GROUND_Y + dog.h, '#4a4a6a', 6);
+  spawnParticles(dog.x + dog.w / 2, GROUND_Y + dog.h, '#5a9a2a', 6);
 }
 
 // ---- Obstacle types ----
@@ -292,7 +292,7 @@ function drawGround(spd) {
   // Ground top line
   drawRect(0, GROUND_Y + 38, W, 4, COL.groundLine);
   // Scrolling hash marks
-  ctx.fillStyle = '#3a3a5a';
+  ctx.fillStyle = '#3a7a10';
   for (let i = -50; i < W + 50; i += 50) {
     const gx = i - groundOffset;
     ctx.fillRect(Math.round(gx), GROUND_Y + 40, 2, 10);
@@ -330,7 +330,7 @@ function drawHUD() {
   const scoreStr = String(Math.floor(state.score)).padStart(6, '0');
   const maxStr = String(maxScore).padStart(6, '0');
   ctx.fillText(`SCORE: ${scoreStr}`, 20, 30);
-  ctx.fillStyle = '#ffcc00';
+  ctx.fillStyle = '#cc7700';
   ctx.fillText(`BEST: ${maxStr}`, W / 2 - 90, 30);
   ctx.fillStyle = COL.hudGreen;
   ctx.fillText(`LEVEL: ${state.level}`, W - 160, 30);
@@ -394,7 +394,7 @@ function drawIdleScreen() {
   ctx.textAlign = 'center';
   ctx.fillText('DOG RUNNER', W / 2, H / 2 - 30);
   ctx.font = '10px "Press Start 2P", monospace';
-  ctx.fillStyle = '#aaaacc';
+  ctx.fillStyle = '#004400';
   ctx.fillText('PRESS SPACE OR UP TO START', W / 2, H / 2 + 10);
   ctx.fillText('UP/SPACE = JUMP   DOWN = DUCK', W / 2, H / 2 + 35);
   ctx.textAlign = 'left';
@@ -410,7 +410,7 @@ function drawDeadScreen() {
   ctx.fillStyle = COL.hudGreen;
   ctx.font = '11px "Press Start 2P", monospace';
   ctx.fillText(`SCORE: ${String(Math.floor(state.score)).padStart(6, '0')}`, W / 2, H / 2 + 4);
-  ctx.fillStyle = '#aaaacc';
+  ctx.fillStyle = '#004400';
   ctx.font = '9px "Press Start 2P", monospace';
   ctx.fillText('PRESS SPACE OR ENTER TO RETRY', W / 2, H / 2 + 34);
   ctx.textAlign = 'left';
@@ -464,7 +464,7 @@ function update() {
       dog.vy = 0;
       dog.isOnGround = true;
       dog.state = dog.ducking ? 'duck' : 'run';
-      spawnParticles(dog.x + dog.w / 2, GROUND_Y + dog.h, '#4a4a6a', 4);
+      spawnParticles(dog.x + dog.w / 2, GROUND_Y + dog.h, '#5a9a2a', 4);
     }
     dog.state = 'jump';
   }
