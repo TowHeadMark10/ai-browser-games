@@ -6,7 +6,7 @@ export default function App() {
   const [tasks, setTasks] = useState([])
   const [input, setInput] = useState('')
 
-  // Al cargar la app, trae las tareas del backend
+  // On app load, fetch tasks from the backend
   useEffect(() => {
     fetch(`${API}/tasks`)
       .then(res => res.json())
@@ -40,21 +40,21 @@ export default function App() {
     <div style={{ maxWidth: 500, margin: '60px auto', fontFamily: 'sans-serif' }}>
       <h1>To-Do App</h1>
 
-      {/* Input para nueva tarea */}
+      {/* Input for new task */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && addTask()}
-          placeholder="Nueva tarea..."
+          placeholder="New task..."
           style={{ flex: 1, padding: 8, fontSize: 16 }}
         />
         <button onClick={addTask} style={{ padding: '8px 16px' }}>
-          Agregar
+          Add
         </button>
       </div>
 
-      {/* Lista de tareas */}
+      {/* Task list */}
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {tasks.map(task => (
           <li
@@ -69,7 +69,7 @@ export default function App() {
             <span style={{ flex: 1, textDecoration: task.done ? 'line-through' : 'none' }}>
               {task.title}
             </span>
-            <button onClick={() => deleteTask(task.id)}>Borrar</button>
+            <button onClick={() => deleteTask(task.id)}>Delete</button>
           </li>
         ))}
       </ul>
