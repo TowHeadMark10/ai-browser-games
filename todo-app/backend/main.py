@@ -38,7 +38,7 @@ def create_task(task: Task):
     return new_task
 
 
-@app.patch("/tasks/{task_id}") #MODIFY
+@app.patch("/tasks/{task_id}") #UPDATE
 def toggle_task(task_id: int):
     for task in tasks:
         if task["id"] == task_id:
