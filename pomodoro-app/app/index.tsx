@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Text, View, TouchableOpacity } from "react-native";
 
 
-const WORK_TIME = 25 * 60; // 25 mins in secs
+const WORK_TIME = 25 * 60; // 25 mins in secs = 1500
 
 export default function Index() {
   const [seconds, setSeconds] = useState(WORK_TIME);
@@ -13,7 +13,7 @@ export default function Index() {
     if (isRunning) {
       IntervalRef.current = setInterval(() => {
         setSeconds((s) => {
-          if (s <=1 ) {
+          if (s <= 1 ) {
             clearInterval(IntervalRef.current!);
             setIsRunning(false);
             return 0;
@@ -27,6 +27,7 @@ export default function Index() {
     return () => clearInterval(IntervalRef.current!);
   }, [isRunning]);
 
+  // Converts seconds to MM:SS. padStart(2,"0") makes sure it always has two digits - so it shows 04:05 and not 4:5
   function formatTime(s: number) {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -52,7 +53,7 @@ return (
   "center" }}                                                                                              
           >                                                                                                
             <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>                             
-              {isRunning ? "Pause" : "Start"}               
+              {isRunning ? "Pause" : "Start"}  {/* The Start/Pause botton - !isRunning inverts the state. If it's running it pauses it, if it's paused it starts it */}             
             </Text>                                                                                        
           </TouchableOpacity>
                                                                                                            
