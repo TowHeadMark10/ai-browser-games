@@ -13,6 +13,8 @@ export default function Index() {
   const [isRunning, setIsRunning] = useState(false);
   // Whether we are in work mode or break mode
   const [isBreak, setisBreak] = useState(false);
+  // Counts how many pomodoros (work sessions) have been completed
+  const [pomodoroCount, setPomodoroCount] = useState(0);
   // Reference to the interval so we can cancel it later 
   const IntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -28,6 +30,8 @@ export default function Index() {
             setisBreak((prev) => {
               // If we were on work, switch to break and vice versa
               const nextisBreak = !prev;
+              // If switching to break, if means a work session just ended - add 1
+              if (nextisBreak) setPomodoroCount((c) => c + 1);
               setSeconds(nextisBreak ? BREAK_TIME : WORK_TIME);
               return nextisBreak;
             });
@@ -58,8 +62,11 @@ export default function Index() {
   }
 
 return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#1a1a2e" 
-  }}>       
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#1a1a2e" }}>    
+        {/* Shows how many pomodoros have been completed */}   
+        <Text style={{ fontSize: 16, color: "#aaaaaa", marginBottom: 8 }}>
+          Pomodoros: {pomodoroCount}
+        </Text>
         {/* Shows current mode: Work or Break */}
         <Text style={{ fontSize: 20, color: isBreak ? "#00ff88" : "#e94560", marginBottom: 16, fontWeight: "bold"}}>
           {isBreak ? "BREAK TIME" : "WORK TIME"}
