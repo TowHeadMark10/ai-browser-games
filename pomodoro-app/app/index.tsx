@@ -8,7 +8,7 @@ import {
 } from "react-native";
 
 // Total work time in seconds (25 min)
-const WORK_TIME = 10;
+const WORK_TIME = 25 * 60;
 // Total break time in seconds (5 min)
 const BREAK_TIME = 5 * 60;
 
@@ -74,6 +74,13 @@ export default function Index() {
     setisBreak(false);
     setSeconds(WORK_TIME);
   }
+
+  // Skips the break and goes back to work mode immediately
+  function skipBreak() {
+    setisBreak(false); // returns to work mode
+    setIsRunning(false); // pauses the timer so the user can start it whenever they want
+    setSeconds(WORK_TIME); // loads the 25 mins again
+  }
   // Adds a new task to the list
   function addTask() {
     if (!taskInput.trim()) return;
@@ -134,6 +141,13 @@ export default function Index() {
       >
         {isBreak ? "BREAK TIME" : "WORK TIME"}
       </Text>
+
+      {/* Only show Skip Break button during break time */}
+      {isBreak && (
+        <TouchableOpacity onPress={skipBreak} style={{ marginBottom: 16 }}>
+          <Text style={{ color: "#aaaaff", fontSize: 14 }}>Skip Break</Text>
+        </TouchableOpacity>
+      )}
 
       <Text
         style={{
