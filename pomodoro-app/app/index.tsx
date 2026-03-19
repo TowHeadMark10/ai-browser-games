@@ -42,6 +42,12 @@ export default function Index() {
             clearInterval(IntervalRef.current!);
             setIsRunning(false);
             setisBreak((prev) => {
+              // Play different sounds for work end and break end
+              if (prev) {
+                playAlarm();
+              } else {
+                playChime();
+              }
               // If we were on work, switch to break and vice versa
               const nextisBreak = !prev;
               // If switching to break, if means a work session just ended - add 1
@@ -81,6 +87,52 @@ export default function Index() {
     setIsRunning(false); // pauses the timer so the user can start it whenever they want
     setSeconds(WORK_TIME); // loads the 25 mins again
   }
+
+  // Plays a soft chime sound using the Web Audio API
+  function playChime() {
+    const ctx = new AudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(528, ctx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(
+      440,
+      ctx.currentTime + 0.8,
+    );
+
+    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 1.2);
+  }
+
+  // Plays a soft alarm sound to signal break is over
+  function playAlarm() {
+    const ctx = new AudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+    oscillator.frequency.setValueAtTime(660, ctx.currentTime + 0.2);
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime + 0.4);
+    oscillator.frequency.setValueAtTime(660, ctx.currentTime + 0.6);
+
+    gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.8);
+  }
+
   // Adds a new task to the list
   function addTask() {
     if (!taskInput.trim()) return;
