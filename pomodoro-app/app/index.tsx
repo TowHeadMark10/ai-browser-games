@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Text, View, TouchableOpacity } from "react-native";
+import { Text, View, TouchableOpacity, TextInput, ScrollView } from "react-native";
 
 // Total work time in seconds (25 min) 
-const WORK_TIME = 25 * 60;
+const WORK_TIME = 10;
 // Total break time in seconds (5 min)
 const BREAK_TIME = 5 * 60;
 
@@ -15,6 +15,10 @@ export default function Index() {
   const [isBreak, setisBreak] = useState(false);
   // Counts how many pomodoros (work sessions) have been completed
   const [pomodoroCount, setPomodoroCount] = useState(0);
+  // List of tasks
+  const [tasks, setTasks] = useState<string[]>([]);
+  // Text currently typed in the input
+  const [taskInput, setTaskInput] = useState("");
   // Reference to the interval so we can cancel it later 
   const IntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -60,6 +64,16 @@ export default function Index() {
     setisBreak(false);
     setSeconds(WORK_TIME);
   }
+  // Adds a new task to the list
+  function addTask() {
+    if (!taskInput.trim()) return;
+    setTasks([...tasks, taskInput.trim()]);
+    setTaskInput("");
+  }
+  //Removes a task by its index
+  function deleteTask(index: number) {
+    setTasks(tasks.filter((_, i) => i != index));
+  }
 
 return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#1a1a2e" }}>    
@@ -95,6 +109,34 @@ return (
             <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>Reset</Text>                 
           </TouchableOpacity>                               
         </View>
+        
+        {/* Task input */}
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 40}}>
+          <input
+            value={taskInput}                                                                                      
+            onChange={(e) => setTaskInput(e.target.value)}                                                         
+            placeholder="Add a task..."                                                                            
+            style={{ flex: 1, backgroundColor: "#2a2a4e", color: "#ffffff", padding: 10, borderRadius: 8, border: "none", fontSize: 15, outline: "none" }}                                                                 
+            />   
+          <TouchableOpacity
+            onPress={addTask}
+            style={{ backgroundColor: "#e94560", padding: 10, borderRadius: 8, justifyContent: "center" }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Add</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Task list */}
+        <ScrollView style={{ width: "100%", marginTop: 16 }}>
+          {tasks.map((task, index) => (
+            <View key={index} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#2a2a4e", padding: 12, borderRadius: 8, marginBottom: 8 }}>
+              <Text style={{ color: "#fff", flex: 1 }}>{task}</Text>
+              <TouchableOpacity onPress={() => deleteTask(index)}>
+              <Text style={{ color: "#e94560", fontWeight: "bold", marginLeft: 8 }}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
       </View>
     );
   }                    
