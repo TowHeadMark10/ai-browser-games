@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Text, View, TouchableOpacity, TextInput, ScrollView } from "react-native";
 
 // Total work time in seconds (25 min) 
-const WORK_TIME = 10;
+const WORK_TIME = 25 * 60;
 // Total break time in seconds (5 min)
 const BREAK_TIME = 5 * 60;
 
@@ -15,8 +15,8 @@ export default function Index() {
   const [isBreak, setisBreak] = useState(false);
   // Counts how many pomodoros (work sessions) have been completed
   const [pomodoroCount, setPomodoroCount] = useState(0);
-  // List of tasks
-  const [tasks, setTasks] = useState<string[]>([]);
+  // Each task has a title and a done status 
+  const [tasks, setTasks] = useState<{ title: string; done: boolean }[]>([]);
   // Text currently typed in the input
   const [taskInput, setTaskInput] = useState("");
   // Reference to the interval so we can cancel it later 
@@ -67,12 +67,19 @@ export default function Index() {
   // Adds a new task to the list
   function addTask() {
     if (!taskInput.trim()) return;
-    setTasks([...tasks, taskInput.trim()]);
+    // New tasks start as not done
+    setTasks([...tasks, { title: taskInput.trim(), done: false }]);
     setTaskInput("");
   }
   //Removes a task by its index
   function deleteTask(index: number) {
     setTasks(tasks.filter((_, i) => i != index));
+  }
+  // Toggles a task between done and not done
+  function toggleTask(index: number) {
+    setTasks(tasks.map((task, i) => 
+      i === index ? { ...task, done: !task.done } : task
+    ));
   }
 
 return (
@@ -130,7 +137,11 @@ return (
         <ScrollView style={{ width: "100%", marginTop: 16 }}>
           {tasks.map((task, index) => (
             <View key={index} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#2a2a4e", padding: 12, borderRadius: 8, marginBottom: 8 }}>
-              <Text style={{ color: "#fff", flex: 1 }}>{task}</Text>
+              <TouchableOpacity onPress={() => toggleTask(index)}>
+                <Text style={{ color: task.done ? "#888" : "#fff", textDecorationLine: task.done ? "line-through" : "none", flex: 1 }}>
+                  {task.done ? "✓ " : "○ "}{task.title}
+                </Text>
+              </TouchableOpacity>
               <TouchableOpacity onPress={() => deleteTask(index)}>
               <Text style={{ color: "#e94560", fontWeight: "bold", marginLeft: 8 }}>Delete</Text>
               </TouchableOpacity>
