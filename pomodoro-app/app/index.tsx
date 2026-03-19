@@ -8,7 +8,7 @@ import {
 } from "react-native";
 
 // Total work time in seconds (25 min)
-const WORK_TIME = 25 * 60;
+const WORK_TIME = 10;
 // Total break time in seconds (5 min)
 const BREAK_TIME = 5 * 60;
 
