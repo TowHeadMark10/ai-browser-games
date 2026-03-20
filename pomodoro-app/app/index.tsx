@@ -441,10 +441,12 @@ export default function Index() {
                     flexDirection: "row",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    backgroundColor: "#2a2a4e",
-                    padding: 12,
-                    borderRadius: 8,
+                    backgroundColor: "#1e1e30",
+                    padding: 14,
+                    borderRadius: 12,
                     marginBottom: 8,
+                    borderWidth: 1,
+                    borderColor: "#2a2a4e",
                   }}
                 >
                   {editingIndex === index ? (
@@ -496,9 +498,15 @@ export default function Index() {
                       </View>
                       <TouchableOpacity
                         onPress={saveEdit}
-                        style={{ marginLeft: 8 }}
+                        style={{
+                          backgroundColor: "#0a3a2a",
+                          paddingHorizontal: 10,
+                          paddingVertical: 4,
+                          borderRadius: 6,
+                          marginLeft: 8,
+                        }}
                       >
-                        <Text style={{ color: "#00ff88", fontWeight: "bold" }}>
+                        <Text style={{ color: "#00ff88", fontSize: 12 }}>
                           Save
                         </Text>
                       </TouchableOpacity>
@@ -506,35 +514,51 @@ export default function Index() {
                   ) : (
                     // Normal mode — show task and action buttons
                     <>
-                      <TouchableOpacity onPress={() => toggleTask(index)}>
+                      <TouchableOpacity
+                        onPress={() => toggleTask(index)}
+                        style={{ flex: 1 }}
+                      >
                         <Text
                           style={{
-                            color: task.done ? "#888" : "#fff",
+                            color: task.done ? "#555" : "#e0e0e0",
                             textDecorationLine: task.done
                               ? "line-through"
                               : "none",
+                            fontSize: 15,
                           }}
                         >
-                          {task.done ? "✓ " : "○ "}{" "}
+                          {task.done ? "✓ " : "○ "}
                           {
                             CATEGORIES.find((c) => c.label === task.category)
                               ?.emoji
-                          }
-                          {" " + task.title}
+                          }{" "}
+                          {task.title}
                         </Text>
                       </TouchableOpacity>
-                      <View style={{ flexDirection: "row", gap: 12 }}>
-                        <TouchableOpacity onPress={() => startEdit(index)}>
-                          <Text
-                            style={{ color: "#aaaaff", fontWeight: "bold" }}
-                          >
+                      <View style={{ flexDirection: "row", gap: 8 }}>
+                        <TouchableOpacity
+                          onPress={() => startEdit(index)}
+                          style={{
+                            backgroundColor: "#2a2a5e",
+                            paddingHorizontal: 10,
+                            paddingVertical: 4,
+                            borderRadius: 6,
+                          }}
+                        >
+                          <Text style={{ color: "#aaaaff", fontSize: 12 }}>
                             Edit
                           </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => deleteTask(index)}>
-                          <Text
-                            style={{ color: "#e94560", fontWeight: "bold" }}
-                          >
+                        <TouchableOpacity
+                          onPress={() => deleteTask(index)}
+                          style={{
+                            backgroundColor: "#3a1a24",
+                            paddingHorizontal: 10,
+                            paddingVertical: 4,
+                            borderRadius: 6,
+                          }}
+                        >
+                          <Text style={{ color: "#e94560", fontSize: 12 }}>
                             Delete
                           </Text>
                         </TouchableOpacity>
