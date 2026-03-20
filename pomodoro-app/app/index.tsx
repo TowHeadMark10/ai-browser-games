@@ -191,136 +191,233 @@ export default function Index() {
   }
 
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#1a1a2e",
-      }}
-    >
-      {/* Shows how many pomodoros have been completed */}
-      <Text style={{ fontSize: 16, color: "#aaaaaa", marginBottom: 8 }}>
-        Pomodoros: {pomodoroCount}
-      </Text>
-      {/* Shows current mode: Work or Break */}
-      <Text
-        style={{
-          fontSize: 20,
-          color: isBreak ? "#00ff88" : "#e94560",
-          marginBottom: 16,
-          fontWeight: "bold",
+    <View style={{ flex: 1, backgroundColor: "#0f0f1a" }}>
+      <ScrollView
+        contentContainerStyle={{
+          alignItems: "center",
+          paddingVertical: 48,
+          paddingHorizontal: 24,
         }}
+        showsVerticalScrollIndicator={false}
       >
-        {isBreak ? "BREAK TIME" : "WORK TIME"}
-      </Text>
+        {/* ── TIMER SECTION ── */}
+        <View style={{ alignItems: "center", width: "100%", maxWidth: 400 }}>
+          {/* Mode label + pomodoro count */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: 8,
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: isBreak ? "#00ff8822" : "#e9456022",
+                paddingHorizontal: 14,
+                paddingVertical: 4,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: isBreak ? "#00ff88" : "#e94560",
+              }}
+            >
+              <Text
+                style={{
+                  color: isBreak ? "#00ff88" : "#e94560",
+                  fontSize: 12,
+                  fontWeight: "bold",
+                  letterSpacing: 2,
+                }}
+              >
+                {isBreak ? "BREAK" : "FOCUS"}
+              </Text>
+            </View>
+            <Text style={{ color: "#555", fontSize: 13 }}>
+              🍅 {pomodoroCount}
+            </Text>
+          </View>
 
-      {/* Only show Skip Break button during break time */}
-      {isBreak && (
-        <TouchableOpacity onPress={skipBreak} style={{ marginBottom: 16 }}>
-          <Text style={{ color: "#aaaaff", fontSize: 14 }}>Skip Break</Text>
-        </TouchableOpacity>
-      )}
-
-      <Text
-        style={{
-          fontSize: 72,
-          color: "#ffffff",
-          fontWeight: "bold",
-          marginBottom: 40,
-        }}
-      >
-        {formatTime(seconds)}
-      </Text>
-
-      <View style={{ flexDirection: "row", gap: 16 }}>
-        {/* Start/Pause button - inverts isRunning state */}
-        <TouchableOpacity
-          onPress={() => setIsRunning(!isRunning)}
-          style={{
-            backgroundColor: "#e94560",
-            padding: 16,
-            borderRadius: 8,
-            minWidth: 120,
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>
-            {isRunning ? "Pause" : "Start"}{" "}
-            {/* The Start/Pause botton - !isRunning inverts the state. If it's running it pauses it, if it's paused it starts it */}
+          {/* Timer */}
+          <Text
+            style={{
+              fontSize: 88,
+              color: "#ffffff",
+              fontWeight: "bold",
+              letterSpacing: -2,
+              marginBottom: 4,
+            }}
+          >
+            {formatTime(seconds)}
           </Text>
-        </TouchableOpacity>
 
-        {/* Reset button - goes back to work mode */}
-        <TouchableOpacity
-          onPress={reset}
-          style={{
-            backgroundColor: "#444",
-            padding: 16,
-            borderRadius: 8,
-            minWidth: 120,
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>
-            Reset
-          </Text>
-        </TouchableOpacity>
-      </View>
+          {/* Skip break */}
+          {isBreak && (
+            <TouchableOpacity onPress={skipBreak} style={{ marginBottom: 8 }}>
+              <Text style={{ color: "#6666aa", fontSize: 13 }}>
+                Skip break →
+              </Text>
+            </TouchableOpacity>
+          )}
 
-      {/* Task input */}
-      <View style={{ flexDirection: "row", gap: 8, marginTop: 40 }}>
-        <input
-          value={taskInput}
-          onChange={(e) => setTaskInput(e.target.value)}
-          placeholder="Add a task..."
+          {/* Buttons */}
+          <View style={{ flexDirection: "row", gap: 12, marginTop: 16 }}>
+            {/* Start/Pause button */}
+            <TouchableOpacity
+              onPress={() => setIsRunning(!isRunning)}
+              style={{
+                backgroundColor: isRunning ? "#333" : "#e94560",
+                paddingVertical: 14,
+                paddingHorizontal: 40,
+                borderRadius: 50,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "bold" }}>
+                {isRunning ? "Pause" : "Start"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Reset button */}
+            <TouchableOpacity
+              onPress={reset}
+              style={{
+                backgroundColor: "#1e1e30",
+                paddingVertical: 14,
+                paddingHorizontal: 24,
+                borderRadius: 50,
+                alignItems: "center",
+                borderWidth: 1,
+                borderColor: "#333",
+              }}
+            >
+              <Text style={{ color: "#888", fontSize: 16 }}>Reset</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ── DIVIDER ── */}
+        <View
           style={{
-            flex: 1,
-            backgroundColor: "#2a2a4e",
-            color: "#ffffff",
-            padding: 10,
-            borderRadius: 8,
-            border: "none",
-            fontSize: 15,
-            outline: "none",
+            width: "100%",
+            maxWidth: 400,
+            height: 1,
+            backgroundColor: "#1e1e30",
+            marginVertical: 32,
           }}
         />
-        <TouchableOpacity
-          onPress={addTask}
-          style={{
-            backgroundColor: "#e94560",
-            padding: 10,
-            borderRadius: 8,
-            justifyContent: "center",
-          }}
-        >
-          <Text style={{ color: "#fff", fontWeight: "bold" }}>Add</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Category selector - only shows when typing */}
-      {taskInput.length > 0 && (
-        <>
-          <Text style={{ color: "#888", fontSize: 11, marginTop: 8 }}>
-            CATEGORY
+        {/* ── TASKS SECTION ── */}
+        <View style={{ width: "100%", maxWidth: 400 }}>
+          {/* Task input */}
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <input
+              value={taskInput}
+              onChange={(e) => setTaskInput(e.target.value)}
+              placeholder="Add a task..."
+              style={{
+                flex: 1,
+                backgroundColor: "#2a2a4e",
+                color: "#ffffff",
+                padding: 10,
+                borderRadius: 8,
+                border: "none",
+                fontSize: 15,
+                outline: "none",
+              }}
+            />
+            <TouchableOpacity
+              onPress={addTask}
+              style={{
+                backgroundColor: "#e94560",
+                padding: 10,
+                borderRadius: 8,
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Add</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Category selector - only shows when typing */}
+          {taskInput.length > 0 && (
+            <>
+              <Text style={{ color: "#888", fontSize: 11, marginTop: 8 }}>
+                CATEGORY
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  marginTop: 8,
+                }}
+              >
+                {CATEGORIES.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.label}
+                    onPress={() => setSelectedCategory(cat.label)}
+                    style={{
+                      backgroundColor:
+                        selectedCategory === cat.label ? "#e94560" : "#2a2a4e",
+                      padding: 6,
+                      borderRadius: 12,
+                    }}
+                  >
+                    <Text style={{ color: "#fff", fontSize: 11 }}>
+                      {cat.emoji} {cat.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
+
+          {/* Category filter buttons */}
+          <Text
+            style={{
+              color: "#555",
+              fontSize: 10,
+              marginTop: 16,
+              letterSpacing: 1,
+            }}
+          >
+            FILTER BY
           </Text>
           <View
             style={{
               flexDirection: "row",
               flexWrap: "wrap",
-              gap: 8,
+              gap: 6,
               marginTop: 8,
             }}
           >
+            <TouchableOpacity
+              onPress={() => setFilterCategory(null)}
+              style={{
+                backgroundColor:
+                  filterCategory === null ? "#e94560" : "#1e1e30",
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: filterCategory === null ? "#e94560" : "#333",
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 11 }}>All</Text>
+            </TouchableOpacity>
             {CATEGORIES.map((cat) => (
               <TouchableOpacity
                 key={cat.label}
-                onPress={() => setSelectedCategory(cat.label)}
+                onPress={() => setFilterCategory(cat.label)}
                 style={{
                   backgroundColor:
-                    selectedCategory === cat.label ? "#e94560" : "#2a2a4e",
-                  padding: 6,
-                  borderRadius: 12,
+                    filterCategory === cat.label ? "#e94560" : "#1e1e30",
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor:
+                    filterCategory === cat.label ? "#e94560" : "#333",
                 }}
               >
                 <Text style={{ color: "#fff", fontSize: 11 }}>
@@ -329,156 +426,125 @@ export default function Index() {
               </TouchableOpacity>
             ))}
           </View>
-        </>
-      )}
 
-      {/* Category filter buttons */}
-      <Text style={{ color: "#888", fontSize: 11, marginTop: 16 }}>
-        FILTER BY
-      </Text>
-      <View
-        style={{
-          flexDirection: "row",
-          flexWrap: "wrap",
-          gap: 8,
-          marginTop: 8,
-          justifyContent: "center",
-        }}
-      >
-        <TouchableOpacity
-          onPress={() => setFilterCategory(null)}
-          style={{
-            backgroundColor: filterCategory === null ? "#e94560" : "#2a2a4e",
-            padding: 8,
-            borderRadius: 16,
-          }}
-        >
-          <Text style={{ color: "#fff", fontSize: 12 }}>All</Text>
-        </TouchableOpacity>
-        {CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat.label}
-            onPress={() => setFilterCategory(cat.label)}
-            style={{
-              backgroundColor:
-                filterCategory === cat.label ? "#e94560" : "#2a2a4e",
-              padding: 8,
-              borderRadius: 16,
-            }}
-          >
-            <Text style={{ color: "#fff", fontSize: 12 }}>
-              {cat.emoji} {cat.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      {/* Task list */}
-      <ScrollView style={{ width: "100%", marginTop: 16 }}>
-        {tasks
-          .filter(
-            (task) =>
-              filterCategory === null || task.category === filterCategory,
-          )
-          .map((task, index) => (
-            <View
-              key={index}
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                backgroundColor: "#2a2a4e",
-                padding: 12,
-                borderRadius: 8,
-                marginBottom: 8,
-              }}
-            >
-              {editingIndex === index ? (
-                // Edit mode — show input and save button
-                <>
-                  <View style={{ flex: 1 }}>
-                    <input
-                      value={editInput}
-                      onChange={(e) => setEditInput(e.target.value)}
-                      style={{
-                        width: "100%",
-                        backgroundColor: "#1a1a2e",
-                        color: "#fff",
-                        padding: 6,
-                        borderRadius: 6,
-                        border: "none",
-                        fontSize: 16,
-                        outline: "none",
-                      }}
-                    />
-                    {/* Category selector in edit mode */}
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        gap: 4,
-                        marginTop: 6,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      {CATEGORIES.map((cat) => (
-                        <TouchableOpacity
-                          key={cat.label}
-                          onPress={() => setSelectedCategory(cat.label)}
+          {/* Task list */}
+          <View style={{ marginTop: 16 }}>
+            {tasks
+              .filter(
+                (task) =>
+                  filterCategory === null || task.category === filterCategory,
+              )
+              .map((task, index) => (
+                <View
+                  key={index}
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    backgroundColor: "#2a2a4e",
+                    padding: 12,
+                    borderRadius: 8,
+                    marginBottom: 8,
+                  }}
+                >
+                  {editingIndex === index ? (
+                    // Edit mode — show input and save button
+                    <>
+                      <View style={{ flex: 1 }}>
+                        <input
+                          value={editInput}
+                          onChange={(e) => setEditInput(e.target.value)}
                           style={{
-                            backgroundColor:
-                              selectedCategory === cat.label
-                                ? "#e94560"
-                                : "#2a2a4e",
-                            padding: 4,
-                            borderRadius: 8,
+                            width: "100%",
+                            backgroundColor: "#1a1a2e",
+                            color: "#fff",
+                            padding: 6,
+                            borderRadius: 6,
+                            border: "none",
+                            fontSize: 16,
+                            outline: "none",
+                          }}
+                        />
+                        {/* Category selector in edit mode */}
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            gap: 4,
+                            marginTop: 6,
+                            flexWrap: "wrap",
                           }}
                         >
-                          <Text style={{ color: "#fff", fontSize: 10 }}>
-                            {cat.emoji} {cat.label}
+                          {CATEGORIES.map((cat) => (
+                            <TouchableOpacity
+                              key={cat.label}
+                              onPress={() => setSelectedCategory(cat.label)}
+                              style={{
+                                backgroundColor:
+                                  selectedCategory === cat.label
+                                    ? "#e94560"
+                                    : "#2a2a4e",
+                                padding: 4,
+                                borderRadius: 8,
+                              }}
+                            >
+                              <Text style={{ color: "#fff", fontSize: 10 }}>
+                                {cat.emoji} {cat.label}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        onPress={saveEdit}
+                        style={{ marginLeft: 8 }}
+                      >
+                        <Text style={{ color: "#00ff88", fontWeight: "bold" }}>
+                          Save
+                        </Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    // Normal mode — show task and action buttons
+                    <>
+                      <TouchableOpacity onPress={() => toggleTask(index)}>
+                        <Text
+                          style={{
+                            color: task.done ? "#888" : "#fff",
+                            textDecorationLine: task.done
+                              ? "line-through"
+                              : "none",
+                          }}
+                        >
+                          {task.done ? "✓ " : "○ "}{" "}
+                          {
+                            CATEGORIES.find((c) => c.label === task.category)
+                              ?.emoji
+                          }
+                          {" " + task.title}
+                        </Text>
+                      </TouchableOpacity>
+                      <View style={{ flexDirection: "row", gap: 12 }}>
+                        <TouchableOpacity onPress={() => startEdit(index)}>
+                          <Text
+                            style={{ color: "#aaaaff", fontWeight: "bold" }}
+                          >
+                            Edit
                           </Text>
                         </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-                  <TouchableOpacity
-                    onPress={saveEdit}
-                    style={{ marginLeft: 8 }}
-                  >
-                    <Text style={{ color: "#00ff88", fontWeight: "bold" }}>
-                      Save
-                    </Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                // Normal mode — show task and action buttons
-                <>
-                  <TouchableOpacity onPress={() => toggleTask(index)}>
-                    <Text
-                      style={{
-                        color: task.done ? "#888" : "#fff",
-                        textDecorationLine: task.done ? "line-through" : "none",
-                      }}
-                    >
-                      {task.done ? "✓ " : "○ "}{" "}
-                      {CATEGORIES.find((c) => c.label === task.category)?.emoji}
-                      {" " + task.title}
-                    </Text>
-                  </TouchableOpacity>
-                  <View style={{ flexDirection: "row", gap: 12 }}>
-                    <TouchableOpacity onPress={() => startEdit(index)}>
-                      <Text style={{ color: "#aaaaff", fontWeight: "bold" }}>
-                        Edit
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => deleteTask(index)}>
-                      <Text style={{ color: "#e94560", fontWeight: "bold" }}>
-                        Delete
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              )}
-            </View>
-          ))}
+                        <TouchableOpacity onPress={() => deleteTask(index)}>
+                          <Text
+                            style={{ color: "#e94560", fontWeight: "bold" }}
+                          >
+                            Delete
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  )}
+                </View>
+              ))}
+          </View>
+        </View>
       </ScrollView>
     </View>
   );
